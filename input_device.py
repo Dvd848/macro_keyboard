@@ -1,10 +1,46 @@
+"""Representation of an input device.
+
+License:
+    LGPL v2.1
+
+    This library is free software; you can redistribute it and/or
+    modify it under the terms of the GNU Lesser General Public
+    License as published by the Free Software Foundation; either
+    version 2.1 of the License, or (at your option) any later version.
+
+    This library is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+    Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public
+    License along with this library; if not, write to the Free Software
+    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+
+"""
 import fcntl
 from typing import Callable
 import ctypes
 import linux_input
 
 class InputDevice():
+    """Representation of an input device.
+    
+    Implemented as a context manager.
+
+    Example usage:
+
+    >>> with InputDevice("/dev/input/by-id/my_device") as device:
+    ...     print(device.name)
+    """
+
     def __init__(self, device_path: str):
+        """Initialize an input device.
+
+        Args:
+            device_path: 
+                Path to the device, under "/dev/input/"
+        """
         self._device_path = device_path
         self._fd = None
         self._name = None
@@ -20,6 +56,8 @@ class InputDevice():
 
     @property
     def name(self) -> str:
+        """Name of the device as reported by EVIOCGNAME."""
+
         if self._name is None:      
             buffer_length = 255
             name = (ctypes.c_char * buffer_length)()
@@ -32,11 +70,23 @@ class InputDevice():
         return self._name
 
     def grab(self, do_grab: bool) -> None:
+        """Grab the device for exclusive use (block input from arriving to other programs).
+
+        Args:
+            do_grab:
+                True for grabbing the device for exclusive use, False for releasing the device.
+        """
         res = fcntl.ioctl(self._fd, linux_input.EVIOCGRAB, int(do_grab))
         if res < 0:
-                raise OSError(-res)
+            raise OSError(-res)
 
     def loop_events(self, callback: Callable[[linux_input.struct_input_event], None]) -> None:
+        """Attach to the device, wait for incoming events and transfer them to the callback for handling.
+
+        Args:
+            callback:
+                A callback to which incoming events are transferred to.
+        """
         while event := self._fd.read(ctypes.sizeof(linux_input.struct_input_event)):
 
             # https://stackoverflow.com/questions/38197517/

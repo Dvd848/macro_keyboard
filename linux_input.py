@@ -1,12 +1,41 @@
+"""Python wrapper for (various definitions from) input.h and input-event-codes.h.
+
+https://github.com/torvalds/linux/blob/master/include/uapi/linux/input.h
+https://github.com/torvalds/linux/blob/master/include/uapi/linux/input-event-codes.h
+https://www.kernel.org/doc/Documentation/input/event-codes.txt
+
+License:
+    LGPL v2.1
+
+    This library is free software; you can redistribute it and/or
+    modify it under the terms of the GNU Lesser General Public
+    License as published by the Free Software Foundation; either
+    version 2.1 of the License, or (at your option) any later version.
+
+    This library is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+    Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public
+    License along with this library; if not, write to the Free Software
+    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+
+"""
 import ctypes
 import enum
 
 from ioctl_opt import IOC, IOW, IOC_READ
 
+#define EVIOCGNAME(len)		_IOC(_IOC_READ, 'E', 0x06, len)		/* get device name */
 EVIOCGNAME = lambda length: IOC(IOC_READ, ord('E'), 0x06, length)
+
+#define EVIOCGRAB		_IOW('E', 0x90, int)			/* Grab/Release device */
 EVIOCGRAB  = IOW(ord('E'), 0x90, ctypes.c_uint32)
 
+
 class EventType(enum.Enum):
+    """Events types."""
     EV_SYN       =   0x00
     EV_KEY       =   0x01
     EV_REL       =   0x02
@@ -21,12 +50,14 @@ class EventType(enum.Enum):
     EV_FF_STATUS =   0x17
     
 class SynchronizationEvent(enum.Enum):
+    """Synchronization Events."""
     SYN_REPORT    =  0
     SYN_CONFIG    =  1
     SYN_MT_REPORT =  2
     SYN_DROPPED   =  3
     
 class MiscEvent(enum.Enum):
+    """Misc. Events."""
     MSC_SERIAL   =   0x00
     MSC_PULSELED =   0x01
     MSC_GESTURE  =   0x02
@@ -35,6 +66,7 @@ class MiscEvent(enum.Enum):
     MSC_MAX      =   0x07
     
 class Keys(enum.Enum):
+    """Key codes."""
     KEY_RESERVED = 0
     KEY_ESC = 1
     KEY_1 = 2
@@ -293,17 +325,35 @@ class Keys(enum.Enum):
     KEY_WIMAX = 246
     
 class KeyEvent(enum.Enum):
+    """Key Events."""
     KEY_UP   = 0
     KEY_DOWN = 1
     KEY_HOLD = 2
 
 class struct_timeval(ctypes.LittleEndianStructure):
+    """timeval structure.
+
+        struct timeval {
+               time_t      tv_sec;     /* seconds */
+               suseconds_t tv_usec;    /* microseconds */
+           };
+    """
     _fields_ = [
         ("tv_sec",  ctypes.c_long),
         ("tv_usec", ctypes.c_long),
     ]
                
 class struct_input_event(ctypes.LittleEndianStructure):
+    """input_event structure.
+
+    struct input_event {
+        struct timeval time;
+        __u16 type;
+        __u16 code;
+        __s32 value;
+    };
+    """
+    
     _fields_ = [
         ("time",  struct_timeval),
         ("type",  ctypes.c_ushort),
