@@ -1,0 +1,13 @@
+{
+    "ActionMapping": [
+        {
+            "KeyCode": "KEY_KP5",
+            "Action": ["curl", "192.168.1.50:8080/jsonrpc", "-X", "POST", "--header", "Content-Type: application/json",
+                       "--data", "{\"method\": \"Player.Open\", \"id\": 44, \"jsonrpc\": \"2.0\", \"params\": {\"item\": {\"file\": \"http://glzwizzlv.bynetcdn.com/glglz_rock_mp3?awCollectionId=misc&awEpisodeId=glglz_rock\"}}}"]
+        },
+        {
+            "KeyCode": "KEY_KP1",
+            "Action": ["whoami"]
+        }
+    ]
+}
