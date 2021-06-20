@@ -87,7 +87,8 @@ class InputDevice():
             callback:
                 A callback to which incoming events are transferred to.
         """
-        while event := self._fd.read(ctypes.sizeof(linux_input.struct_input_event)):
+        event = self._fd.read(ctypes.sizeof(linux_input.struct_input_event))
+        while event:
 
             # https://stackoverflow.com/questions/38197517/
             # Note: type = EV_SYN, code = SYN_REPORT (0,0), is a synchronization event.
@@ -99,5 +100,5 @@ class InputDevice():
 
             input_event = linux_input.struct_input_event.from_buffer_copy(event)
             callback(input_event)
-        
+            event = self._fd.read(ctypes.sizeof(linux_input.struct_input_event))
 
