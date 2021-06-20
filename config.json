@@ -1,19 +1,38 @@
 {
     "ActionMapping": [
         {
-            "Name": "Stop",
+            "Name": "Stop 1",
             "KeyCode": "KEY_KP0",
             "Action": ["curl", "192.168.1.50:8080/jsonrpc", "-X", "POST", "--header", "Content-Type: application/json",
                        "--data", "{\"method\": \"Player.Stop\", \"id\": 44, \"jsonrpc\": \"2.0\", \"params\": { \"playerid\": 0 }}"]
         },
         {
-            "Name": "Glglz Classic Rock",
-            "KeyCode": "KEY_KP5",
+            "Name": "Stop 2",
+            "KeyCode": "KEY_KP1",
+            "Action": ["python3", "plugins/kodi.py", "-k", "192.168.1.50:8080", "stop"]
+        },
+
+        {
+            "Name": "Classic Rock 1",
+            "KeyCode": "KEY_KP2",
             "Action": ["curl", "192.168.1.50:8080/jsonrpc", "-X", "POST", "--header", "Content-Type: application/json",
                        "--data", "{\"method\": \"Player.Open\", \"id\": 44, \"jsonrpc\": \"2.0\", \"params\": {\"item\": {\"file\": \"http://glzwizzlv.bynetcdn.com/glglz_rock_mp3?awCollectionId=misc&awEpisodeId=glglz_rock\"}}}"]
         },
         {
-            "KeyCode": "KEY_KP1",
+            "Name": "Classic Rock 2",
+            "KeyCode": "KEY_KP3",
+            "Action": ["python3", "plugins/kodi.py", "-k", "192.168.1.50:8080", "play", "-s", "http://glzwizzlv.bynetcdn.com/glglz_rock_mp3?awCollectionId=misc&awEpisodeId=glglz_rock"]
+        },
+
+        {
+            "Name": "YouTube",
+            "KeyCode": "KEY_KP4",
+            "Action": ["python3", "plugins/kodi.py", "-k", "192.168.1.50:8080", "play", "-y", "https://www.youtube.com/watch?v=dQw4w9WgXcQ"]
+        },
+
+
+        {
+            "KeyCode": "KEY_KP9",
             "Action": ["whoami"]
         }
     ]
