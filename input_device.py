@@ -1,5 +1,8 @@
 """Representation of an input device.
 
+Sources:
+    https://github.com/Dvd848/macro_keyboard
+
 License:
     LGPL v2.1
 

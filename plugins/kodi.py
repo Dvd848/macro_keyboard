@@ -1,3 +1,47 @@
+"""Basic Python wrapper for communicating with Kodi over JSON RPC.
+
+This program can play streams on a remote Kodi setup.
+Kodi needs to be configured to accept JSON-RPC payload as detailed in the
+official Wiki:
+https://kodi.wiki/view/JSON-RPC_API
+
+This program requires the youtube_dl package:
+https://youtube-dl.org/
+
+Example Usage
+-------------
+
+Play YouTube Video:
+python3 kodi.py -k 192.168.1.50:8080 play -y "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+
+Play Stream:
+python3 kodi.py -k 192.168.1.50:8080 play -s "http://glzwizzlv.bynetcdn.com/glglz_rock_mp3?awCollectionId=misc&awEpisodeId=glglz_rock"
+
+Stop Playback:
+python3 kodi.py -k 192.168.1.50:8080 stop
+
+Sources:
+    https://github.com/Dvd848/macro_keyboard
+
+License:
+    LGPL v2.1
+
+    This library is free software; you can redistribute it and/or
+    modify it under the terms of the GNU Lesser General Public
+    License as published by the Free Software Foundation; either
+    version 2.1 of the License, or (at your option) any later version.
+
+    This library is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+    Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public
+    License along with this library; if not, write to the Free Software
+    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+
+"""
+
 from youtube_dl import YoutubeDL
 import argparse
 import enum
@@ -5,10 +49,24 @@ import requests
 import time
 
 class KodiPlayer():
+    """Wrapper for communicating with Kodi over JSON-RPC."""
+
     def __init__(self, host: str):
+        """Initialize class.
+
+        Args:
+            host:
+                Hostname/IP and port in the format 'host:port'.
+        """
         self.host = host
 
     def play_youtube(self, url: str) -> None:
+        """Play a YouTube stream.
+
+        Args:
+            url:
+                URL of the public video page. Actual stream URL is fetched automatically.
+        """
         with YoutubeDL({'format': 'bestaudio'}) as ydl:
             info_dict = ydl.extract_info(url, download=False)
             try:
@@ -18,15 +76,23 @@ class KodiPlayer():
                 raise RuntimeError(f"Can't find stream URL for youtube video {url}")
 
     def play_stream(self, url: str) -> None:
+        """Play a stream.
+
+        Args:
+            url:
+                URL of the stream.
+        """
         json_req = {"method": "Player.Open", "id": int(time.time()) , "jsonrpc": "2.0", "params": {"item": {"file": url}}}
         return self._send_request(json_req)
 
     def get_active_players(self):
+        """Returns a list of active player IDs."""
         json_req = {"jsonrpc": "2.0", "method": "Player.GetActivePlayers", "id": int(time.time())}
         response = self._send_request(json_req)
         return [result["playerid"] for result in response["result"]]
 
     def stop(self) -> None:
+        """Stop the current active players."""
         active_players = self.get_active_players()
         result = []
         for id in active_players:
@@ -35,6 +101,14 @@ class KodiPlayer():
         return result[0] if len(result) == 1 else result
 
     def _send_request(self, json_req):
+        """Send a JSON request to the remote Kodi.
+
+        Args:
+            json_req: JSON request to send.
+        
+        Returns:
+            The JSON response if the response code was OK (raises exception otherwise).
+        """
         r = requests.post(f"http://{self.host}/jsonrpc", json=json_req)
         if (r.status_code != 200):
             raise RuntimeError(f"Got status code {r.status_code}")

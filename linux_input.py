@@ -4,6 +4,9 @@ https://github.com/torvalds/linux/blob/master/include/uapi/linux/input.h
 https://github.com/torvalds/linux/blob/master/include/uapi/linux/input-event-codes.h
 https://www.kernel.org/doc/Documentation/input/event-codes.txt
 
+Sources:
+    https://github.com/Dvd848/macro_keyboard
+
 License:
     LGPL v2.1
 
