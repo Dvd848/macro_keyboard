@@ -17,6 +17,9 @@ python3 kodi.py -k 192.168.1.50:8080 play -y "https://www.youtube.com/watch?v=dQ
 Play Stream:
 python3 kodi.py -k 192.168.1.50:8080 play -s "http://glzwizzlv.bynetcdn.com/glglz_rock_mp3?awCollectionId=misc&awEpisodeId=glglz_rock"
 
+Play Song by ID:
+python3 kodi.py -k 192.168.1.50:8080 play -g 101
+
 Stop Playback:
 python3 kodi.py -k 192.168.1.50:8080 stop
 
@@ -42,14 +45,19 @@ License:
 
 """
 
-from youtube_dl import YoutubeDL
 import argparse
 import enum
 import requests
 import time
 
+from collections import namedtuple
+from pprint import pprint
+
 class KodiPlayer():
     """Wrapper for communicating with Kodi over JSON-RPC."""
+
+    Album = namedtuple("Album", "id label")
+    Song = namedtuple("Song", "id label")
 
     def __init__(self, host: str):
         """Initialize class.
@@ -67,6 +75,7 @@ class KodiPlayer():
             url:
                 URL of the public video page. Actual stream URL is fetched automatically.
         """
+        from youtube_dl import YoutubeDL
         with YoutubeDL({'format': 'bestaudio'}) as ydl:
             info_dict = ydl.extract_info(url, download=False)
             try:
@@ -83,6 +92,16 @@ class KodiPlayer():
                 URL of the stream.
         """
         json_req = {"method": "Player.Open", "id": int(time.time()) , "jsonrpc": "2.0", "params": {"item": {"file": url}}}
+        return self._send_request(json_req)
+
+    def play_song(self, songid: int) -> None:
+        """Play a song.
+
+        Args:
+            songid:
+                The song's ID.
+        """
+        json_req = {"method": "Player.Open", "id": int(time.time()) , "jsonrpc": "2.0", "params": {"item": {"songid": songid}}}
         return self._send_request(json_req)
 
     def get_active_players(self):
@@ -109,16 +128,38 @@ class KodiPlayer():
         Returns:
             The JSON response if the response code was OK (raises exception otherwise).
         """
+        print(json_req)
         r = requests.post(f"http://{self.host}/jsonrpc", json=json_req)
         if (r.status_code != 200):
             raise RuntimeError(f"Got status code {r.status_code}")
         return r.json()
+
+    def get_albums(self):
+        """Return a list of albums."""
+        json_req = {"jsonrpc": "2.0", "method": "AudioLibrary.GetAlbums", "id": int(time.time())}
+        response = self._send_request(json_req)
+        result = []
+        albums = response["result"]["albums"]
+        for album in albums:
+            result.append(self.Album(id = album["albumid"], label = album["label"]))
+        return result
+
+    def get_songs(self):
+        """Return a list of songs."""
+        json_req = {"jsonrpc": "2.0", "method": "AudioLibrary.GetSongs", "id": int(time.time())}
+        response = self._send_request(json_req)
+        result = []
+        songs = response["result"]["songs"]
+        for song in songs:
+            result.append(self.Song(id = song["songid"], label = song["label"]))
+        return result
 
 if __name__ == "__main__":
     class Commands(enum.Enum):
         """Commands for argument parsing."""
         PLAY    = "play"
         STOP    = "stop"
+        LIST    = "list"
 
     parser = argparse.ArgumentParser(description = 'Wrapper for controlling Kodi from remote')
     parser.add_argument("-k", "--kodi-host", required = True, help="Kodi URL in form of host:port")
@@ -130,8 +171,14 @@ if __name__ == "__main__":
     play_command = play_parser.add_mutually_exclusive_group(required = True)
     play_command.add_argument('-s', '--stream', action = 'store', type = str, help = "Play stream")
     play_command.add_argument('-y', '--youtube', action = 'store', type = str, help = "Play YouTube video")
+    play_command.add_argument('-g', '--song', action = 'store', type = int, metavar = "SONG_ID", help = "Play song with given song ID")
 
     stop_parser = subparsers.add_parser(Commands.STOP.value, help = 'Stop')
+
+    list_parser = subparsers.add_parser(Commands.LIST.value, help = 'List details')
+    list_command = list_parser.add_mutually_exclusive_group(required = True)
+    list_command.add_argument('--albums', action = 'store_true', help = "List albums")
+    list_command.add_argument('--songs', action = 'store_true', help = "List songs")
 
     args = parser.parse_args()
 
@@ -142,8 +189,15 @@ if __name__ == "__main__":
                 print(player.play_youtube(args.youtube))
             elif args.stream:
                 print(player.play_stream(args.stream))
+            elif args.song:
+                print(player.play_song(args.song))
         elif args.command == Commands.STOP.value:
             print(player.stop())
+        elif args.command == Commands.LIST.value:
+            if args.albums:
+                pprint(player.get_albums())
+            elif args.songs:
+                pprint(player.get_songs())
 
     except Exception as e:
         print(f"Error: {str(e)}")
