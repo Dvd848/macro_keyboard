@@ -10,6 +10,8 @@ The script opens a handle to the requested keyboard and "grabs" it (blocking any
 
 I use this project to allow a preschooler to play a few predefined songs on demand, by mapping them to the keypad keys. The script runs as a service on a Raspberry PI, and upon identifying a keystroke, sends a command to play the mapped song over JSON-RPC to a remote Kodi setup.
 
+![](docs/images/background.png)
+
 ## Usage
 
 ### 1. Identify the keyboard device path
