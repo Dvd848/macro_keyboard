@@ -153,6 +153,21 @@ class KodiPlayer():
         for song in songs:
             result.append(self.Song(id = song["songid"], label = song["label"]))
         return result
+    
+    def get_audio_output(self):
+        """Return audio output device."""
+        json_req = {"jsonrpc": "2.0", "method": "Settings.GetSettingValue", "id": int(time.time()), 
+                    "params": {"setting": "audiooutput.audiodevice"}}
+        response = self._send_request(json_req)
+        return response["result"]["value"]
+    
+    def set_audio_output(self, device):
+        """Set audio output device."""
+        json_req = {"jsonrpc": "2.0", "method": "Settings.SetSettingValue", "id": int(time.time()), 
+                    "params": {"setting": "audiooutput.audiodevice", "value": device}}
+        response = self._send_request(json_req)
+        return response["result"]
+        
 
 if __name__ == "__main__":
     class Commands(enum.Enum):
@@ -160,6 +175,7 @@ if __name__ == "__main__":
         PLAY    = "play"
         STOP    = "stop"
         LIST    = "list"
+        AUDIO   = "audio"
 
     parser = argparse.ArgumentParser(description = 'Wrapper for controlling Kodi from remote')
     parser.add_argument("-k", "--kodi-host", required = True, help="Kodi URL in form of host:port")
@@ -180,6 +196,11 @@ if __name__ == "__main__":
     list_command.add_argument('--albums', action = 'store_true', help = "List albums")
     list_command.add_argument('--songs', action = 'store_true', help = "List songs")
 
+    audio_parser = subparsers.add_parser(Commands.AUDIO.value, help = 'Audio Settings')
+    audio_command = audio_parser.add_mutually_exclusive_group(required = True)
+    audio_command.add_argument('--get-output', action = 'store_true', help = "Get Audio Output Device")
+    audio_command.add_argument('--set-output', action = 'store', help = "Set Audio Output Device") # "ALSA:@" / "ALSA:sysdefault:CARD=Headphones"
+
     args = parser.parse_args()
 
     try:
@@ -198,6 +219,11 @@ if __name__ == "__main__":
                 pprint(player.get_albums())
             elif args.songs:
                 pprint(player.get_songs())
+        elif args.command == Commands.AUDIO.value:
+            if args.get_output:
+                print(player.get_audio_output())
+            elif args.set_output:
+                print(player.set_audio_output(args.set_output))
 
     except Exception as e:
         print(f"Error: {str(e)}")
